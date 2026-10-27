@@ -87,7 +87,7 @@ JAVA_HOME=<path-to-jdk21> ./mvnw test
 
 Includes unit tests (`JwtServiceTest`, `AuthServiceTest`) and an integration
 test (`DemoBackendApplicationTests`) that boots the full Spring context against
-a Testcontainers Postgres instance.
+one shared Testcontainers Postgres server (shape: [`module-conventions.md`](../platform/docs/module-conventions.md#backend), Tests).
 
 ## API
 

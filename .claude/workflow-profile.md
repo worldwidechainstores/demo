@@ -75,7 +75,7 @@ the Jira QA status and the tester guides follow from it. Then re-run
 | End-to-end / browser suite | `cd frontend && npx playwright test` |
 
 - **Code-generation rules**: no code generation; **no Lombok** — hand-write getters/setters on entities, DTOs are `record`s.
-- **Test conventions**: JUnit 5 + Testcontainers for backend integration tests.
+- **Test conventions**: JUnit 5 + Testcontainers for backend integration tests, one shared Postgres server per run ([platform convention](../platform/docs/module-conventions.md#backend), Tests).
 - **Regression suite**: `frontend/tests/e2e/specs/` (Playwright; `auth.setup.ts` signs in as the
   seeded `wcstest` e2e admin) — a ticket adds one spec. Needs the platform + demo compose
   stacks up.

@@ -24,8 +24,8 @@ import za.co.csnx.demo.TestcontainersConfiguration;
  * the point is that the MIGRATION produces this row — a slice test against a
  * developer's local database would assert whatever happened to be sitting there.
  *
- * <p>Named {@code ...Test}, not {@code ...IT}, deliberately: this module leaves
- * surefire on its defaults, so a class ending in IT is never run by {@code mvn test}
+ * <p>Named {@code ...Test}, not {@code ...IT}, deliberately: this module keeps
+ * surefire's default includes, so a class ending in IT is never run by {@code mvn test}
  * — its own {@code IntVendorConsumerIT} does not run either. The container-backed
  * tests that DO run here are named Test/Tests.
  */
