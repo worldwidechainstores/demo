@@ -29,7 +29,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@tanstack/react-query": "^5.100.10",
     "@tanstack/react-table": "^8.21.3",
-    "@worldwidechainstores/csnx-engine": "^0.3.150",
+    "@worldwidechainstores/csnx-engine": "^0.3.161",
     "axios": "^1.16.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

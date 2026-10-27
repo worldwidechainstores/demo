@@ -11,7 +11,7 @@
 
 	<groupId>za.co.csnx</groupId>
 	<artifactId>csnx-engine-spring</artifactId>
-	<version>0.3.48</version>
+	<version>0.3.49</version>
 	<name>csnx-engine-spring</name>
 	<description>CSnx metadata-driven UI engine - shared Spring backend framework
 		(activity services, wire DTOs, base entity/repository, section-16 grant
@@ -22,9 +22,8 @@
 		<java.version>21</java.version>
 		<!-- Spring Cloud release train aligned to Spring Boot 3.5 (Northfields). -->
 		<spring-cloud.version>2025.0.0</spring-cloud.version>
-		<poi.version>5.3.0</poi.version>
-		<!-- 1.10.0 is self-contained (no commons-io dependency), avoiding a
-		     classpath clash with the older commons-io that Apache POI brings. -->
+		<poi.version>5.4.1</poi.version>
+		<!-- Why 1.10.0: see the commons-csv dependency below. -->
 		<commons-csv.version>1.10.0</commons-csv.version>
 	</properties>
 
@@ -43,7 +42,7 @@
 	<distributionManagement>
 		<repository>
 			<id>github-csnx</id>
-			<url>https://maven.pkg.github.com/alessiohchain/platform</url>
+			<url>https://maven.pkg.github.com/worldwidechainstores/platform</url>
 		</repository>
 	</distributionManagement>
 
@@ -157,9 +156,14 @@
 		     fileintegration.tabular.WorkbookFileReader / WorkbookCellText may name
 		     a POI type, or that graceful degradation stops working.
 
-		     commons-csv is pinned at 1.10.0 deliberately: it is self-contained,
-		     which avoids a classpath clash with the older commons-io that POI
-		     brings. Vendor Portal's pom records the same reason. -->
+		     commons-csv is pinned at 1.10.0, the last release with no runtime
+		     dependencies (1.11+ adds commons-io and commons-codec), so a CSV-only
+		     module carries one jar, and a module that also takes POI gets
+		     commons-io from POI alone (2.18.0 with POI 5.4.1). A bump is not
+		     blocked by POI, but commons-csv is declared first, so it wins
+		     commons-io mediation: 1.11 and 1.12 would pull POI back to an older
+		     commons-io (2.16.1, 2.17.0); 1.13+ bring 2.18.0 or newer. Vendor
+		     Portal's pom pins the same version. -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-csv</artifactId>
@@ -183,6 +187,12 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.tngtech.archunit</groupId>
+			<artifactId>archunit</artifactId>
+			<version>1.4.2</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
