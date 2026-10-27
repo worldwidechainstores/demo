@@ -37,8 +37,8 @@ public class TestcontainersConfiguration {
 	}
 
 	/**
-	 * Without its own details Flyway borrows from the context's pool, and a test that sizes that
-	 * pool (a pool of one) cannot start.
+	 * Keeps Flyway on its own connection to the server, as @ServiceConnection did, instead of
+	 * borrowing from the context pool.
 	 */
 	@Bean
 	FlywayConnectionDetails postgresFlywayConnectionDetails() {
