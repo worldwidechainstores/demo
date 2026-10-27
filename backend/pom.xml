@@ -285,6 +285,20 @@
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<!-- Every cached context shares the run's one database (TestPostgres), so a
+					     background poller in one context acts on rows another context's test is
+					     asserting on. Parked for the run. -->
+					<systemPropertyVariables>
+						<csnx.engine.call-log.retry.poll-ms>3600000</csnx.engine.call-log.retry.poll-ms>
+						<csnx.engine.batch.poll-ms>3600000</csnx.engine.batch.poll-ms>
+						<csnx.engine.file-integration.poll-ms>3600000</csnx.engine.file-integration.poll-ms>
+					</systemPropertyVariables>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
 					<annotationProcessorPaths>
