@@ -1,4 +1,5 @@
 import { test as setup, expect } from '@playwright/test';
+import { fillIdpLogin } from './idp-login';
 
 /**
  * One-time sign-in through the central platform IdP, persisted as Playwright
@@ -27,8 +28,7 @@ setup('authenticate', async ({ page }) => {
   // `wcstest` is the dedicated e2e ADMIN (platform AppUserSeeder); `wcs` is
   // the human dev login and is never used by automated tests. See
   // pom/frontend/tests/e2e/README.md for the full user matrix.
-  await page.getByLabel(/username/i).fill(process.env.WCS_USERNAME ?? 'wcstest');
-  await page.getByLabel(/^password$/i).fill(process.env.WCS_PASSWORD ?? 'wcstest123');
+  await fillIdpLogin(page, process.env.WCS_USERNAME ?? 'wcstest', process.env.WCS_PASSWORD ?? 'wcstest123', process.env.WCS_COMPANY);
   const signIn = page.getByRole('button', { name: /sign in/i });
   await expect(signIn).toBeEnabled();
   await signIn.click();
