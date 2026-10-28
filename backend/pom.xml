@@ -102,7 +102,7 @@
 		<dependency>
 			<groupId>za.co.csnx</groupId>
 			<artifactId>csnx-engine-spring</artifactId>
-			<version>0.3.49</version>
+			<version>0.3.50</version>
 		</dependency>
 		<dependency>
 			<groupId>za.co.csnx</groupId>
