@@ -28,7 +28,7 @@ setup('authenticate', async ({ page }) => {
   // `wcstest` is the dedicated e2e ADMIN (platform AppUserSeeder); `wcs` is
   // the human dev login and is never used by automated tests. See
   // pom/frontend/tests/e2e/README.md for the full user matrix.
-  await fillIdpLogin(page, process.env.WCS_USERNAME ?? 'wcstest', process.env.WCS_PASSWORD ?? 'wcstest123', process.env.WCS_COMPANY);
+  await fillIdpLogin(page, process.env.WCS_USERNAME ?? 'wcstest', process.env.WCS_PASSWORD ?? 'wcstest123');
   const signIn = page.getByRole('button', { name: /sign in/i });
   await expect(signIn).toBeEnabled();
   await signIn.click();
