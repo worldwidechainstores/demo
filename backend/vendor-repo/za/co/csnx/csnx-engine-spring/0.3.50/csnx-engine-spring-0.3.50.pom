@@ -11,7 +11,7 @@
 
 	<groupId>za.co.csnx</groupId>
 	<artifactId>csnx-engine-spring</artifactId>
-	<version>0.3.49</version>
+	<version>0.3.50</version>
 	<name>csnx-engine-spring</name>
 	<description>CSnx metadata-driven UI engine - shared Spring backend framework
 		(activity services, wire DTOs, base entity/repository, section-16 grant
