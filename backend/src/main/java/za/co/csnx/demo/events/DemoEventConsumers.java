@@ -1,12 +1,15 @@
 package za.co.csnx.demo.events;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.instrument.MeterRegistry;
+import java.io.IOException;
 import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.Message;
 import za.co.csnx.engine.events.EventEnvelope;
 import za.co.csnx.engine.events.IdempotentEventHandler;
 
@@ -22,7 +25,16 @@ import za.co.csnx.engine.events.IdempotentEventHandler;
  *   <li>{@code platform.company.changed} — the platform's company master →
  *       {@code demo.int_company} (the platform → demo leg of the CDC triangle).</li>
  * </ul>
- * Both are WAL-CDC captured (configured centrally on the platform's CDCC screen).
+ *
+ * <p>The bean takes the raw message and parses the CloudEvents JSON itself: legacy CSnx publishes over
+ * Qpid JMS, which sends a BytesMessage as {@code application/octet-stream}, so a typed
+ * {@code Consumer<EventEnvelope>} fails the conversion with a {@link ClassCastException} on every CSnx
+ * event. Platform modules send {@code application/json} through {@code StreamBridge}; both arrive as bytes
+ * and parse the same. A body that is not an envelope with an id is logged, counted in
+ * {@code demo.event.rejected} and dropped: the binding has no dead-letter queue, so retrying it would only
+ * delay the same discard, and one such body must not hold up the events behind it.
+ *
+ * <p>Both slices are WAL-CDC captured (configured centrally on the platform's CDCC screen).
  * Delivery is at-least-once: the inbox dedups broker redelivery, and the mirror
  * writes are state-based so CDC-level replays (fresh event ids) converge too.
  * Flow walkthrough: {@code docs/cdc-vendor-pom-to-demo.md} (platform repo).
@@ -44,20 +56,27 @@ public class DemoEventConsumers {
     private final IntVendorMirrorStore vendorMirror;
     private final IntCompanyMirrorStore companyMirror;
     private final ObjectMapper mapper;
+    private final MeterRegistry meters;
 
     public DemoEventConsumers(IdempotentEventHandler idempotent,
                               IntVendorMirrorStore vendorMirror,
                               IntCompanyMirrorStore companyMirror,
-                              ObjectMapper mapper) {
+                              ObjectMapper mapper,
+                              MeterRegistry meters) {
         this.idempotent = idempotent;
         this.vendorMirror = vendorMirror;
         this.companyMirror = companyMirror;
         this.mapper = mapper;
+        this.meters = meters;
     }
 
     @Bean
-    public Consumer<EventEnvelope> integrationEvents() {
-        return event -> {
+    public Consumer<Message<byte[]>> integrationEvents() {
+        return message -> {
+            EventEnvelope event = parse(message.getPayload());
+            if (event == null) {
+                return;
+            }
             String type = event.type();
             if (VENDOR_CHANGED.equals(type)) {
                 idempotent.handle(event, VENDOR_CONSUMER_ID, e -> {
@@ -74,5 +93,21 @@ public class DemoEventConsumers {
             }
             // other event types on the shared exchange — not ours
         };
+    }
+
+    private EventEnvelope parse(byte[] payload) {
+        try {
+            EventEnvelope event = mapper.readValue(payload, EventEnvelope.class);
+            if (event == null || event.id() == null) {
+                // Jackson accepts a body without an id; the inbox dedup key needs one.
+                throw new IOException("no id");
+            }
+            return event;
+        } catch (IOException | RuntimeException e) {
+            meters.counter("demo.event.rejected").increment();
+            log.warn("Dropping an unreadable event ({} bytes): {}", payload == null ? 0 : payload.length,
+                    e.getMessage());
+            return null;
+        }
     }
 }
