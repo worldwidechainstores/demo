@@ -58,7 +58,7 @@ spring:
   cloud:
     stream:
       bindings:
-        # DEMO's inbound integration events — one Consumer bean
+        # DEMO's inbound integration events — one Consumer<Message<byte[]>> bean
         # (DemoEventConsumers.integrationEvents) dispatches by event type:
         # pom.vendor.changed -> demo.int_vendor and platform.company.changed ->
         # demo.int_company (both WAL CDC, configured on the platform CDCC screen).
