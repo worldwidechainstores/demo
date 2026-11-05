@@ -26,7 +26,7 @@ import za.co.csnx.engine.events.EventEnvelope;
 
 /**
  * DEMO's first inbound consumer: {@code pom.vendor.changed} (pom WAL CDC) →
- * {@code demo.int_vendor}. Invokes the {@code vendorEvents} bean directly
+ * {@code demo.int_vendor}. Invokes the {@code integrationEvents} bean directly
  * (bypassing the broker — pom's {@code PlatformUserMirrorConsumerIT}
  * pattern): I upserts, U updates, D tombstones retaining the last-known
  * fields, the inbox dedups a re-delivered event id, and foreign event types
