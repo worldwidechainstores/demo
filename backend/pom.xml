@@ -292,6 +292,13 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
+					<!-- The default patterns skip *IT classes, which would leave the Testcontainers
+					     ITs out of `mvnw test` and CI. -->
+					<includes>
+						<include>**/*Test.java</include>
+						<include>**/*Tests.java</include>
+						<include>**/*IT.java</include>
+					</includes>
 					<!-- Every cached context shares the run's one database (TestPostgres), so a
 					     background poller in one context acts on rows another context's test is
 					     asserting on. Parked for the run. -->

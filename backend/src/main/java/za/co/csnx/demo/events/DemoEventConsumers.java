@@ -31,8 +31,9 @@ import za.co.csnx.engine.events.IdempotentEventHandler;
  * {@code Consumer<EventEnvelope>} fails the conversion with a {@link ClassCastException} on every CSnx
  * event. Platform modules send {@code application/json} through {@code StreamBridge}; both arrive as bytes
  * and parse the same. A body that is not an envelope with an id is logged, counted in
- * {@code demo.event.rejected} and dropped: the binding has no dead-letter queue, so retrying it would only
- * delay the same discard, and one such body must not hold up the events behind it.
+ * {@code demo.event.rejected} and dropped: it can never succeed, so retrying it only delays the same
+ * discard (the binding has no dead-letter queue), and it must not hold up the events behind it. A failure
+ * inside the business write is not caught here, so it still rolls back the inbox row and rethrows.
  *
  * <p>Both slices are WAL-CDC captured (configured centrally on the platform's CDCC screen).
  * Delivery is at-least-once: the inbox dedups broker redelivery, and the mirror

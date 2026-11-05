@@ -34,11 +34,16 @@ import za.co.csnx.engine.events.EventEnvelope;
 /**
  * The real-broker round-trip for both senders on the shared exchange: platform modules publish an
  * {@link EventEnvelope} through {@code StreamBridge} ({@code application/json}), and legacy CSnx
- * publishes the same JSON as an AMQP bytes body that Qpid JMS tags {@code application/octet-stream}.
+ * publishes the same JSON as an AMQP bytes body that Qpid JMS tags {@code application/octet-stream}
+ * (simulated here by an AMQP 0-9-1 publish with that content type, which is what the binder sees).
  * Both must reach the mirror; a body that is not an envelope must be dropped without stopping the
  * events behind it.
  */
-@SpringBootTest(properties = "csnx.events.enabled=true")
+@SpringBootTest(properties = {
+        "csnx.events.enabled=true",
+        "csnx.events.relay.poll-ms=600000",
+        "csnx.events.poller.poll-ms=600000"
+})
 @Import(TestcontainersConfiguration.class)
 @Testcontainers
 class DemoEventRabbitIT {
@@ -73,6 +78,21 @@ class DemoEventRabbitIT {
         streamBridge.send("csnx.events", vendorEvent("RBT-JSON", "Json Vendor"));
 
         assertThat(awaitVendorName("RBT-JSON")).isEqualTo("Json Vendor");
+    }
+
+    @Test
+    void theSameEventIdPublishedTwiceIsAppliedOnce() throws Exception {
+        EventEnvelope event = vendorEvent("RBT-DEDUP", "First Name");
+        streamBridge.send("csnx.events", event);
+        assertThat(awaitVendorName("RBT-DEDUP")).isEqualTo("First Name");
+
+        streamBridge.send("csnx.events", new EventEnvelope(event.id(), event.type(), event.source(),
+                event.subject(), event.time(), event.specversion(), vendorEvent("RBT-DEDUP", "Second Name").data()));
+        // The queue is FIFO for one consumer, so once the fence is mirrored the duplicate has been handled.
+        streamBridge.send("csnx.events", vendorEvent("RBT-DEDUP-FENCE", "Fence"));
+        assertThat(awaitVendorName("RBT-DEDUP-FENCE")).isEqualTo("Fence");
+
+        assertThat(vendorNameOrNull("RBT-DEDUP")).isEqualTo("First Name");
     }
 
     @Test

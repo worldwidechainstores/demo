@@ -1,10 +1,12 @@
 package za.co.csnx.demo.events;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
@@ -15,10 +17,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.messaging.Message;
-import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
 import za.co.csnx.demo.TestcontainersConfiguration;
 import za.co.csnx.engine.events.EventEnvelope;
 
@@ -48,6 +50,7 @@ class IntVendorConsumerIT {
 
     @Autowired private NamedParameterJdbcTemplate jdbc;
     @Autowired private ObjectMapper mapper;
+    @Autowired private MeterRegistry meters;
 
     @BeforeEach
     void clean() {
@@ -86,6 +89,18 @@ class IntVendorConsumerIT {
                 "PLATFORM", "WCS/jdoe", Instant.now(), EventEnvelope.SPEC_VERSION,
                 mapper.createObjectNode()));
         assertThat(inboxCount()).isEqualTo(3);
+    }
+
+    @Test
+    void aFailingWriteRethrowsRollsBackTheInboxAndIsNotCountedAsRejected() {
+        double rejectedBefore = meters.counter("demo.event.rejected").count();
+        EventEnvelope noData = new EventEnvelope(UUID.randomUUID(), "pom.vendor.changed",
+                "POM", "VND-902", Instant.now(), EventEnvelope.SPEC_VERSION, null);
+
+        assertThatThrownBy(() -> deliver(noData)).isInstanceOf(RuntimeException.class);
+
+        assertThat(inboxCount()).isZero();
+        assertThat(meters.counter("demo.event.rejected").count()).isEqualTo(rejectedBefore);
     }
 
     private EventEnvelope vendorEvent(UUID id, String op, String code, String name,
